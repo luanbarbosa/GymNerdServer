@@ -3,7 +3,8 @@
   "name": "GymNerd Exercise Image Downloader",
   "version": "1.0",
   "description": "Right-click an image to download it as the current exercise's imageFileId.",
-  "permissions": ["contextMenus", "downloads", "storage"],
+  "permissions": ["contextMenus", "downloads", "storage", "offscreen"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

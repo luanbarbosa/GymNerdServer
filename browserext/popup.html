@@ -7,12 +7,34 @@
   h3 { margin: 0 0 8px; font-size: 14px; }
   #status { font-size: 12px; color: #333; margin: 10px 0; white-space: pre-line; }
   button { margin-right: 6px; margin-top: 4px; }
+  #imageIdRow { font-size: 12px; color: #333; margin: -6px 0 10px; display: flex; align-items: center; gap: 4px; }
+  #imageIdRow[hidden] { display: none; }
+  #imageIdValue { word-break: break-all; }
+  #copyImageIdBtn { flex: none; margin: 0; padding: 2px; display: inline-flex; border: none; background: none; color: #555; cursor: pointer; border-radius: 4px; }
+  #copyImageIdBtn:hover { background: #e5e5e5; color: #000; }
+  #jsonInput { width: 100%; box-sizing: border-box; height: 80px; margin-top: 8px; font-family: monospace; font-size: 11px; }
 </style>
 </head>
 <body>
   <h3>GymNerd Image Downloader</h3>
+  <button id="openViewerBtn">Open exercise viewer</button>
+  <button id="openExerciseDataBtn">Exercise data</button>
   <input type="file" id="filePicker" accept=".json,application/json">
+  <textarea id="jsonInput" placeholder="...or paste exercise JSON here"></textarea>
+  <button id="pasteBtn">Load pasted JSON</button>
+  <h3 style="margin-top:12px">Lookup by imageFileId</h3>
+  <input type="text" id="imageIdInput" placeholder="imageFileId(s), comma/space separated" style="width:100%;box-sizing:border-box">
+  <button id="lookupBtn">Find &amp; load</button>
+  <div style="font-size:11px;margin-top:6px">Source exercises.json (optional, kept for this browser session):</div>
+  <input type="file" id="sourcePicker" accept=".json,application/json">
+  <div id="sourceStatus" style="font-size:11px;color:#666"></div>
   <div id="status">No catalog loaded.</div>
+  <div id="imageIdRow" hidden>
+    <span>imageFileId: <span id="imageIdValue"></span></span>
+    <button id="copyImageIdBtn" title="Copy imageFileId" aria-label="Copy imageFileId">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
   <button id="prevBtn">Go to previous</button>
   <button id="skipBtn">Skip current</button>
   <button id="resetBtn">Reset pointer</button>

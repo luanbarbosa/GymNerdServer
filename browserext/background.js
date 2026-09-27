@@ -23,10 +23,17 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const exercise = catalog[pointer];
-  const ext = getExtension(info.srcUrl);
-  const filename = `${exercise.imageFileId}.${ext}`;
+  const filename = `${exercise.imageFileId}.webp`;
 
-  chrome.downloads.download({ url: info.srcUrl, filename, saveAs: false }, (downloadId) => {
+  let url;
+  try {
+    url = await toWebpDataUrl(info.srcUrl);
+  } catch (err) {
+    console.error("GymNerd: webp conversion failed", err);
+    return;
+  }
+
+  chrome.downloads.download({ url, filename, saveAs: false }, (downloadId) => {
     if (chrome.runtime.lastError || downloadId === undefined) {
       console.error("GymNerd: download failed", chrome.runtime.lastError);
       return;
@@ -38,18 +45,69 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   });
 });
 
-function getExtension(url) {
-  try {
-    const pathname = new URL(url).pathname;
-    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
-    return match ? match[1].toLowerCase() : "jpg";
-  } catch {
-    return "jpg";
+const WEBP_QUALITY = 0.8;
+
+async function toWebpDataUrl(srcUrl) {
+  const response = await fetch(srcUrl);
+  if (!response.ok) throw new Error(`fetch failed: ${response.status}`);
+
+  const blob = await response.blob();
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  // Already webp (static or animated): keep as-is, canvas would drop animation frames.
+  if (isWebp(bytes)) return toDataUrl(bytes, "image/webp");
+  if (isGif(bytes)) return gifToAnimatedWebpDataUrl(toDataUrl(bytes, "image/gif"));
+
+  const bitmap = await createImageBitmap(blob);
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0);
+  bitmap.close();
+
+  const webp = await canvas.convertToBlob({ type: "image/webp", quality: WEBP_QUALITY });
+  return toDataUrl(new Uint8Array(await webp.arrayBuffer()), "image/webp");
+}
+
+// ImageDecoder (needed to read GIF frames) isn't exposed to service workers, so the
+// animated encode runs in an offscreen document.
+async function gifToAnimatedWebpDataUrl(gifDataUrl) {
+  if (!(await chrome.offscreen.hasDocument())) {
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["BLOBS"],
+      justification: "Decode GIF frames and encode them as animated WebP"
+    });
   }
+  const result = await chrome.runtime.sendMessage({
+    type: "gif-to-webp",
+    dataUrl: gifDataUrl,
+    quality: WEBP_QUALITY
+  });
+  if (result?.error) throw new Error(result.error);
+  return result.dataUrl;
+}
+
+function ascii(bytes, start, end) {
+  return String.fromCharCode(...bytes.subarray(start, end));
+}
+
+// Checks bytes since servers often send wrong Content-Type.
+function isWebp(bytes) {
+  return bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WEBP";
+}
+
+function isGif(bytes) {
+  return bytes.length >= 6 && ascii(bytes, 0, 4) === "GIF8";
+}
+
+function toDataUrl(bytes, mimeType) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return `data:${mimeType};base64,${btoa(binary)}`;
 }
 
 async function openSearchTab(name) {
-  const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(name)}`;
+  const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${name} draw`)}`;
   const { searchTabId } = await chrome.storage.local.get("searchTabId");
 
   if (searchTabId !== undefined) {

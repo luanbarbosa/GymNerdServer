@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercise Viewer</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #d2d2d7;
+    --accent: #0071e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111113;
+      --card: #1c1c1e;
+      --text: #f5f5f7;
+      --muted: #98989d;
+      --border: #38383a;
+      --accent: #2997ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    margin: 0;
+    padding: 16px;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 20px; margin: 0; flex: 1; }
+  #status { color: var(--muted); font-size: 14px; }
+  button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  input[type="number"] { width: 80px; }
+  input[type="number"], select {
+    padding: 7px 8px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+  }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr));
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .card .img-wrap {
+    flex: 1;
+    min-height: 0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card img { width: 100%; height: 100%; object-fit: contain; }
+  .card .missing { color: #999; font-size: 13px; }
+  .card .info { padding: 10px 12px; }
+  .card .name { font-weight: 600; font-size: 15px; }
+  .card .meta { color: var(--muted); font-size: 12px; margin-top: 4px; word-break: break-all; }
+  .card .actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
+  .card .actions button { padding: 5px 10px; font-size: 12px; }
+  .card.problem { border-color: #e5484d; box-shadow: 0 0 0 2px #e5484d; }
+  .card.problem button.mark { background: #e5484d; border-color: #e5484d; color: #fff; }
+  #toast {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+  #problems-dialog {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text);
+  }
+  #picker-dialog, #fix-dialog {
+    width: calc(100vw - 64px);
+    height: calc(100vh - 64px);
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text);
+  }
+  #picker-dialog[open], #fix-dialog[open] { display: flex; flex-direction: column; }
+  #fix-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+  .fix-group { margin-bottom: 20px; }
+  .fix-group h3, .fix-prompt-header h3 { font-size: 14px; margin: 0 0 8px; color: var(--muted); }
+  .fix-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .picker-option.selected { border-color: #30a46c; box-shadow: 0 0 0 3px #30a46c; }
+  .fix-option { display: flex; flex-direction: column; gap: 6px; }
+  .fix-option .picker-option { flex: 1; }
+  .fix-option button.keep-image { padding: 5px 10px; font-size: 12px; }
+  .fix-option button.keep-image.selected { background: #0090ff; border-color: #0090ff; color: #fff; }
+  .fix-prompt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  #fix-prompt {
+    width: 100%;
+    height: 280px;
+    padding: 10px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #problems-dialog::backdrop, #picker-dialog::backdrop, #fix-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+  #picker-search {
+    width: 260px;
+    padding: 7px 8px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .picker-body { flex: 1; min-height: 0; display: flex; }
+  #picker-source {
+    flex: none;
+    width: 280px;
+    padding: 16px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .picker-source-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  #picker-source-img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #fff; border-radius: 8px; }
+  #picker-source-name { font-weight: 600; font-size: 15px; }
+  #picker-source-id { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--muted); word-break: break-all; }
+  @media (max-width: 700px) { #picker-source { display: none; } }
+  #picker-grid {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-auto-rows: max-content;
+    align-content: start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .picker-option {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 0 8px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 12px;
+  }
+  .picker-option:disabled:hover { border-color: var(--border); box-shadow: none; }
+  .picker-option:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .picker-option img { flex: none; width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #fff; }
+  .picker-option span { padding: 0 8px; }
+  .picker-cell { position: relative; display: flex; }
+  .picker-cell .picker-option { flex: 1; }
+  button.expand-img {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.85;
+  }
+  button.expand-img:hover { opacity: 1; border-color: var(--accent); }
+  #picker-source-img[src]:not([src=""]) { cursor: zoom-in; }
+  #image-dialog {
+    max-width: calc(100vw - 64px);
+    max-height: calc(100vh - 64px);
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text);
+    cursor: zoom-out;
+  }
+  #image-dialog[open] { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #image-dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
+  #image-dialog-img { max-width: calc(100vw - 100px); max-height: calc(100vh - 130px); object-fit: contain; background: #fff; border-radius: 8px; }
+  #image-dialog-caption { font-weight: 600; font-size: 14px; }
+  .card.duplicate { border-color: #f5a524; box-shadow: 0 0 0 2px #f5a524; }
+  .card.duplicate button.dup { background: #f5a524; border-color: #f5a524; color: #000; }
+  .card.fixed { border-color: #30a46c; box-shadow: 0 0 0 2px #30a46c; }
+  .card.fixed button.fix { background: #30a46c; border-color: #30a46c; color: #fff; }
+  .card .duplicate-of { color: #f5a524; font-size: 12px; margin-top: 4px; }
+  #problems-dialog .dialog-header, #picker-dialog .dialog-header, #fix-dialog .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  #problems-dialog h2, #picker-dialog h2, #fix-dialog h2 { font-size: 16px; margin: 0; flex: 1; }
+  #problems-list { list-style: none; margin: 0; padding: 8px 16px; overflow-y: auto; }
+  #problems-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  #problems-list li:last-child { border-bottom: none; }
+  #problems-list .row-text { flex: 1; min-width: 0; }
+  #problems-list .row-name { font-size: 14px; font-weight: 600; }
+  #problems-list .row-id { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); word-break: break-all; }
+  #problems-list button { padding: 5px 10px; font-size: 12px; }
+  #problems-list .empty { color: var(--muted); justify-content: center; border: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Exercise Viewer</h1>
+  <span id="status">Loading…</span>
+  <button id="prev">Previous</button>
+  <button id="next" class="primary">Next</button>
+  <label>Go to # <input id="jump" type="number" min="1"></label>
+  <label>Type
+    <select id="type-filter"><option value="">All</option></select>
+  </label>
+  <label>Per page
+    <select id="page-size">
+      <option>1</option><option>2</option><option>3</option><option selected>4</option>
+      <option>6</option><option>8</option><option>12</option><option>16</option><option>24</option>
+    </select>
+  </label>
+  <label><input id="show-fixed" type="checkbox"> <span id="show-fixed-label">Show fixed (0)</span></label>
+  <button id="show-problems">Show problems</button>
+  <button id="export">Export problems (0)</button>
+  <button id="import">Import problems</button>
+  <input id="import-file" type="file" accept=".txt,text/plain" hidden>
+  <button id="clear">Clear problems</button>
+  <button id="export-duplicates">Export duplicates (0)</button>
+  <button id="fix-duplicates">Fix duplicates</button>
+  <button id="reset">Reset</button>
+</header>
+<div id="grid"></div>
+<div id="toast"></div>
+<dialog id="problems-dialog">
+  <div class="dialog-header">
+    <h2 id="problems-title">Problematic exercises</h2>
+    <button id="copy-all">Copy all</button>
+    <button id="close-problems">Close</button>
+  </div>
+  <ul id="problems-list"></ul>
+</dialog>
+<dialog id="picker-dialog">
+  <div class="dialog-header">
+    <h2 id="picker-title">Duplicate of…</h2>
+    <input id="picker-search" type="search" placeholder="Search name, alias or #">
+    <label>Type <select id="picker-type-filter"></select></label>
+    <button id="picker-confirm" class="primary" disabled>Mark as duplicates</button>
+    <button id="close-picker">Close</button>
+  </div>
+  <div class="picker-body">
+    <div id="picker-source">
+      <div class="picker-source-label">Marking as duplicate</div>
+      <img id="picker-source-img" alt="">
+      <div id="picker-source-name"></div>
+      <div id="picker-source-id"></div>
+    </div>
+    <div id="picker-grid"></div>
+  </div>
+</dialog>
+<dialog id="image-dialog">
+  <img id="image-dialog-img" alt="">
+  <div id="image-dialog-caption"></div>
+</dialog>
+<dialog id="fix-dialog">
+  <div class="dialog-header">
+    <h2 id="fix-title">Fix duplicates</h2>
+    <label>Type <select id="fix-type-filter"></select></label>
+    <button id="fix-generate" class="primary">Generate prompt</button>
+    <button id="close-fix">Close</button>
+  </div>
+  <div id="fix-body">
+    <div id="fix-groups"></div>
+    <div id="fix-prompt-wrap" hidden>
+      <div class="fix-prompt-header">
+        <h3>Merge prompt</h3>
+        <button id="fix-copy" class="primary">Copy prompt</button>
+      </div>
+      <textarea id="fix-prompt" readonly></textarea>
+    </div>
+  </div>
+</dialog>
+
+<script src="viewer.js"></script>
+<script src="fix-duplicates.js"></script>
+</body>
+</html>
