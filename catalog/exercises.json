@@ -6523,16 +6523,40 @@
     "searchAlias": [
       "Seated Reverse Grip Concentration Curl",
       "Reverse Concentration Curl",
-      "Dumbbell Seated Reverse Curl",
-      "Concentration Curl"
+      "Dumbbell Seated Reverse Curl"
     ],
     "searchAliasPT": [
-      "Rosca concentrada",
       "Rosca concentrada inversa",
       "Rosca concentrada pronada",
       "Rosca inversa sentado com halter"
     ],
-    "imageFileId": "39dfa895-c552-44d7-9de0-a77181e1cd59",
+    "imageFileId": "39dfa895-c552-44d7-9de0-a77181e1cd59"
+  },
+  {
+    "id": "1a7be749-09ed-4bb0-811f-6e6ae7ab6c9a",
+    "name": "Concentration Curl",
+    "namePT": "Rosca concentrada",
+    "type": "ARMS",
+    "trackedMetrics": [
+      {
+        "type": "REPS",
+        "default": true
+      },
+      {
+        "type": "WEIGHT",
+        "default": true
+      }
+    ],
+    "searchAlias": [
+      "Dumbbell Concentration Curl",
+      "Seated Concentration Curl",
+      "Dumbbell Seated Concentration Curl"
+    ],
+    "searchAliasPT": [
+      "Rosca concentrada com halter",
+      "Rosca concentrada sentado"
+    ],
+    "imageFileId": "1491f588-d16a-4ba5-8ca2-ed713018e3cb",
     "legacyImageId": 33
   },
   {
