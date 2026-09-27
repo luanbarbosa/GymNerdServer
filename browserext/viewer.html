@@ -56,7 +56,7 @@
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   button:disabled { opacity: 0.4; cursor: default; }
   input[type="number"] { width: 80px; }
-  input[type="number"], select {
+  input[type="number"], input[type="search"], select {
     padding: 7px 8px;
     font-size: 14px;
     border: 1px solid var(--border);
@@ -64,6 +64,35 @@
     background: var(--card);
     color: var(--text);
   }
+  input[type="search"] { width: 220px; }
+  .search-wrap { position: relative; }
+  #search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    width: 280px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+  #search-results button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    font-size: 13px;
+  }
+  #search-results button:hover { background: var(--bg); }
+  #search-results .search-id { color: var(--muted); font-size: 11px; word-break: break-all; }
+  #search-results .empty { padding: 8px 10px; color: var(--muted); font-size: 13px; }
   #grid {
     display: grid;
     grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
@@ -268,7 +297,10 @@
   <span id="status">Loading…</span>
   <button id="prev">Previous</button>
   <button id="next" class="primary">Next</button>
-  <label>Go to # <input id="jump" type="number" min="1"></label>
+  <div class="search-wrap">
+    <label>Search <input id="search-input" type="search" placeholder="Name or id…" autocomplete="off"></label>
+    <div id="search-results" hidden></div>
+  </div>
   <label>Type
     <select id="type-filter"><option value="">All</option></select>
   </label>
@@ -286,6 +318,7 @@
   <button id="clear">Clear problems</button>
   <button id="export-duplicates">Export duplicates (0)</button>
   <button id="fix-duplicates">Fix duplicates</button>
+  <button id="refresh">Refresh</button>
   <button id="reset">Reset</button>
 </header>
 <div id="grid"></div>

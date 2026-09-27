@@ -35,7 +35,7 @@ function hiddenReason(exercise) {
   if (!showFixed && fixed.includes(exercise.id)) return "Exercise is marked as fixed and hidden";
   return null;
 }
-// Bumped by "Reset" so every image URL changes and the browser refetches it instead of using its cache.
+// Bumped by "Refresh"/"Reset" so every image URL changes and the browser refetches it instead of using its cache.
 // Persisted so a later page load keeps using the fresh copies rather than older cached ones.
 const IMAGE_VERSION_KEY = "gymnerd.imageVersion";
 let imageVersion = "";
@@ -51,7 +51,8 @@ const grid = document.getElementById("grid");
 const status = document.getElementById("status");
 const prevBtn = document.getElementById("prev");
 const nextBtn = document.getElementById("next");
-const jumpInput = document.getElementById("jump");
+const searchInput = document.getElementById("search-input");
+const searchResults = document.getElementById("search-results");
 const exportBtn = document.getElementById("export");
 const clearBtn = document.getElementById("clear");
 const typeFilterSelect = document.getElementById("type-filter");
@@ -126,7 +127,7 @@ function linkDuplicates(a, b) {
   if (rootA !== rootB) duplicates[rootA] = rootB;
 }
 
-// Exercises already fixed; hidden from the grid unless "Show fixed" is on. Kept across "Reset".
+// Exercises already fixed; hidden from the grid unless "Show fixed" is on. Kept across "Refresh", cleared by "Reset".
 const FIXED_KEY = "gymnerd.fixedExerciseIds";
 const SHOW_FIXED_KEY = "gymnerd.showFixed";
 let fixed = [];
@@ -454,16 +455,69 @@ applyPageSize();
 
 prevBtn.onclick = () => goTo(offset - pageSize);
 nextBtn.onclick = () => goTo(offset + pageSize);
-jumpInput.onchange = () => {
-  const exercise = exercises[Number(jumpInput.value) - 1];
-  if (!exercise) return;
+// Matches by name/alias (any language) or exact catalog #, id substring included.
+function matchingExercises(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return exercises
+    .map((e, i) => ({ e, i }))
+    .filter(({ e, i }) => {
+      const haystack = [e.name, e.namePT, e.id, ...(e.searchAlias || []), ...(e.searchAliasPT || [])]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q) || String(i + 1) === query.trim();
+    })
+    .slice(0, 20);
+}
+
+function pickSearchResult(exercise) {
   const reason = hiddenReason(exercise);
   if (reason) {
     showToast(reason);
     return;
   }
-  if (typeFilter && exercise.type !== typeFilter) setTypeFilter("");
-  goTo(visibleExercises().indexOf(exercise));
+  goToExercise(exercise);
+  searchInput.value = "";
+  hideSearchResults();
+}
+
+function hideSearchResults() {
+  searchResults.hidden = true;
+  searchResults.innerHTML = "";
+}
+
+function renderSearchResults() {
+  const matches = matchingExercises(searchInput.value);
+  searchResults.innerHTML = "";
+  if (!matches.length) {
+    hideSearchResults();
+    return;
+  }
+  matches.forEach(({ e, i }) => {
+    const button = document.createElement("button");
+    const label = document.createElement("div");
+    label.textContent = `${i + 1}. ${e.name}`;
+    const id = document.createElement("div");
+    id.className = "search-id";
+    id.textContent = e.id;
+    button.append(label, id);
+    button.onmousedown = (evt) => evt.preventDefault(); // keep focus so blur doesn't beat the click
+    button.onclick = () => pickSearchResult(e);
+    searchResults.appendChild(button);
+  });
+  searchResults.hidden = false;
+}
+searchInput.oninput = renderSearchResults;
+searchInput.onfocus = () => { if (searchInput.value) renderSearchResults(); };
+searchInput.onblur = () => hideSearchResults();
+searchInput.onkeydown = (e) => {
+  if (e.key === "Enter") {
+    const [first] = matchingExercises(searchInput.value);
+    if (first) pickSearchResult(first.e);
+  } else if (e.key === "Escape") {
+    searchInput.value = "";
+    hideSearchResults();
+  }
 };
 document.getElementById("show-problems").onclick = () => {
   renderProblemsList();
@@ -541,7 +595,7 @@ saveProblems();
 saveDuplicates();
 saveFixed();
 document.addEventListener("keydown", (e) => {
-  if (e.target === jumpInput || e.target === pageSizeSelect || e.target === typeFilterSelect || e.target === showFixedInput || document.querySelector("dialog[open]")) return;
+  if (e.target === searchInput || e.target === pageSizeSelect || e.target === typeFilterSelect || e.target === showFixedInput || document.querySelector("dialog[open]")) return;
   if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); if (!nextBtn.disabled) nextBtn.click(); }
   if (e.key === "ArrowLeft") { e.preventDefault(); if (!prevBtn.disabled) prevBtn.click(); }
 });
@@ -553,19 +607,12 @@ function loadExercises() {
   });
 }
 
-// Reloads exercises.json and every image from scratch and clears all problem and duplicate markings.
-document.getElementById("reset").onclick = async () => {
-  const markings = problems.length + Object.keys(duplicates).length;
-  if (markings && !window.confirm(`Reset the catalog? This clears ${problems.length} problems and ${Object.keys(duplicates).length} duplicates.`)) return;
-  problems = [];
-  duplicates = {};
-  saveProblems();
-  saveDuplicates();
+// Re-fetches exercises.json and every image from scratch. Keeps problem, duplicate and fixed markings.
+async function reloadCatalog() {
   imageVersion = String(Date.now());
   try {
     localStorage.setItem(IMAGE_VERSION_KEY, imageVersion);
   } catch {}
-  status.textContent = "Resetting…";
   try {
     exercises = await loadExercises();
     populateTypeFilter();
@@ -574,6 +621,25 @@ document.getElementById("reset").onclick = async () => {
   } catch (err) {
     status.textContent = `Failed to load exercises: ${err.message}`;
   }
+}
+
+document.getElementById("refresh").onclick = async () => {
+  status.textContent = "Refreshing…";
+  await reloadCatalog();
+};
+
+// Clears every marking (problems, duplicates, fixed) as well, as if running for the first time.
+document.getElementById("reset").onclick = async () => {
+  const markings = problems.length + Object.keys(duplicates).length + fixed.length;
+  if (markings && !window.confirm(`Reset the catalog? This clears ${problems.length} problems, ${Object.keys(duplicates).length} duplicates and ${fixed.length} fixed markings.`)) return;
+  problems = [];
+  duplicates = {};
+  fixed = [];
+  saveProblems();
+  saveDuplicates();
+  saveFixed();
+  status.textContent = "Resetting…";
+  await reloadCatalog();
 };
 
 loadExercises()
