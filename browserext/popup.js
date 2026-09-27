@@ -21,6 +21,10 @@ openViewerBtn.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("viewer.html") });
 });
 
+document.getElementById("openExerciseDataBtn").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("exercise-data.html") });
+});
+
 async function render() {
   const { catalog = [], pointer = 0 } = await chrome.storage.local.get(["catalog", "pointer"]);
   imageIdRow.hidden = true;
