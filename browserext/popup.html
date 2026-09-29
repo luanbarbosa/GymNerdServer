@@ -1,44 +1,172 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<title>GymNerd</title>
 <style>
-  body { font-family: system-ui, sans-serif; width: 280px; padding: 12px; }
-  h3 { margin: 0 0 8px; font-size: 14px; }
-  #status { font-size: 12px; color: #333; margin: 10px 0; white-space: pre-line; }
-  button { margin-right: 6px; margin-top: 4px; }
-  #imageIdRow { font-size: 12px; color: #333; margin: -6px 0 10px; display: flex; align-items: center; gap: 4px; }
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #d2d2d7;
+    --hover: #ececf0;
+    --accent: #0071e3;
+    --accent-text: #ffffff;
+    --error: #e5484d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111113;
+      --card: #1c1c1e;
+      --text: #f5f5f7;
+      --muted: #98989d;
+      --border: #38383a;
+      --hover: #2a2a2d;
+      --accent: #2997ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    width: 320px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+  }
+  header { display: flex; align-items: center; gap: 8px; padding: 12px 14px 0; }
+  header img { width: 22px; height: 22px; }
+  header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+
+  .tabs { display: flex; gap: 4px; margin: 12px 14px 0; padding: 3px; background: var(--hover); border-radius: 9px; }
+  .tab {
+    flex: 1; padding: 6px 0; border: none; border-radius: 7px; background: none;
+    color: var(--muted); font: inherit; font-weight: 500; cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+
+  .panel { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 14px; }
+  .panel[hidden] { display: none; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .card h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+
+  .link {
+    display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  }
+  .link:hover { background: var(--hover); }
+  .link svg { flex: none; width: 20px; height: 20px; color: var(--accent); }
+  .link .label { font-weight: 600; }
+  .link .desc { color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .link .chev { margin-left: auto; color: var(--muted); width: 14px; height: 14px; }
+
+  button.btn {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+  }
+  button.btn:hover { background: var(--hover); }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.btn.primary:hover { filter: brightness(1.08); }
+  button.btn.danger { color: var(--error); }
+  .row { display: flex; gap: 6px; }
+  .row .btn { flex: 1; }
+
+  input[type="text"], textarea {
+    width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  textarea { height: 72px; resize: vertical; font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  input[type="file"] { width: 100%; font-size: 12px; color: var(--muted); }
+  input[type="file"]::file-selector-button {
+    margin-right: 8px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 7px;
+    background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+  }
+  .hint { font-size: 11px; color: var(--muted); }
+
+  #status { white-space: pre-line; font-weight: 500; }
+  #imageIdRow { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
   #imageIdRow[hidden] { display: none; }
-  #imageIdValue { word-break: break-all; }
-  #copyImageIdBtn { flex: none; margin: 0; padding: 2px; display: inline-flex; border: none; background: none; color: #555; cursor: pointer; border-radius: 4px; }
-  #copyImageIdBtn:hover { background: #e5e5e5; color: #000; }
-  #jsonInput { width: 100%; box-sizing: border-box; height: 80px; margin-top: 8px; font-family: monospace; font-size: 11px; }
+  #imageIdRow > span { min-width: 0; }
+  #imageIdValue { color: var(--text); word-break: break-all; font-family: ui-monospace, Menlo, monospace; }
+  #copyImageIdBtn { flex: none; margin-left: auto; padding: 4px; display: inline-flex; border: none; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; }
+  #copyImageIdBtn:hover { background: var(--hover); color: var(--text); }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  details[open] summary { margin-bottom: 8px; }
+  details > * + * { margin-top: 8px; }
 </style>
 </head>
 <body>
-  <h3>GymNerd Image Downloader</h3>
-  <button id="openViewerBtn">Open exercise viewer</button>
-  <button id="openExerciseDataBtn">Exercise data</button>
-  <input type="file" id="filePicker" accept=".json,application/json">
-  <textarea id="jsonInput" placeholder="...or paste exercise JSON here"></textarea>
-  <button id="pasteBtn">Load pasted JSON</button>
-  <h3 style="margin-top:12px">Lookup by imageFileId</h3>
-  <input type="text" id="imageIdInput" placeholder="imageFileId(s), comma/space separated" style="width:100%;box-sizing:border-box">
-  <button id="lookupBtn">Find &amp; load</button>
-  <div style="font-size:11px;margin-top:6px">Source exercises.json (optional, kept for this browser session):</div>
-  <input type="file" id="sourcePicker" accept=".json,application/json">
-  <div id="sourceStatus" style="font-size:11px;color:#666"></div>
-  <div id="status">No catalog loaded.</div>
-  <div id="imageIdRow" hidden>
-    <span>imageFileId: <span id="imageIdValue"></span></span>
-    <button id="copyImageIdBtn" title="Copy imageFileId" aria-label="Copy imageFileId">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-    </button>
+  <header>
+    <img src="icons/icon48.png" alt="">
+    <h1>GymNerd</h1>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabPages" data-panel="pagesPanel">Pages</button>
+    <button class="tab" role="tab" id="tabSearcher" data-panel="searcherPanel">Image searcher</button>
   </div>
-  <button id="prevBtn">Go to previous</button>
-  <button id="skipBtn">Skip current</button>
-  <button id="resetBtn">Reset pointer</button>
-  <button id="cancelBtn">Cancel</button>
+
+  <section class="panel" id="pagesPanel" role="tabpanel">
+    <button class="link" id="openViewerBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <div><div class="label">Exercise viewer</div><div class="desc">Browse exercises and images</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <button class="link" id="openExerciseDataBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+      <div><div class="label">Exercise data</div><div class="desc">Inspect and edit exercise JSON</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <button class="link" id="openMascotMoodBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>
+      <div><div class="label">Mascot mood editor</div><div class="desc">Tune mascot expressions</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </section>
+
+  <section class="panel" id="searcherPanel" role="tabpanel" hidden>
+    <div class="card">
+      <div id="status">No catalog loaded.</div>
+      <div id="imageIdRow" hidden>
+        <span>imageFileId: <span id="imageIdValue"></span></span>
+        <button id="copyImageIdBtn" title="Copy imageFileId" aria-label="Copy imageFileId">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+      <div class="row">
+        <button class="btn" id="prevBtn">Previous</button>
+        <button class="btn" id="skipBtn">Skip</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="resetBtn">Reset</button>
+        <button class="btn danger" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Lookup by imageFileId</h2>
+      <input type="text" id="imageIdInput" placeholder="imageFileId(s), comma/space separated">
+      <button class="btn primary" id="lookupBtn">Find &amp; load</button>
+      <details>
+        <summary>Source exercises.json</summary>
+        <input type="file" id="sourcePicker" accept=".json,application/json">
+        <div id="sourceStatus" class="hint"></div>
+        <div class="hint">Optional, kept for this browser session.</div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>Load exercise JSON</h2>
+      <input type="file" id="filePicker" accept=".json,application/json">
+      <textarea id="jsonInput" placeholder="...or paste exercise JSON here"></textarea>
+      <button class="btn" id="pasteBtn">Load pasted JSON</button>
+    </div>
+  </section>
+
   <script src="popup.js"></script>
 </body>
 </html>

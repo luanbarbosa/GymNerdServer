@@ -11,6 +11,20 @@ const imageIdRow = document.getElementById("imageIdRow");
 const imageIdValue = document.getElementById("imageIdValue");
 const copyImageIdBtn = document.getElementById("copyImageIdBtn");
 
+const tabs = [...document.querySelectorAll(".tab")];
+
+function selectTab(tab) {
+  for (const t of tabs) {
+    const selected = t === tab;
+    t.setAttribute("aria-selected", selected);
+    document.getElementById(t.dataset.panel).hidden = !selected;
+  }
+  localStorage.setItem("popupTab", tab.id);
+}
+
+for (const tab of tabs) tab.addEventListener("click", () => selectTab(tab));
+selectTab(document.getElementById(localStorage.getItem("popupTab")) ?? tabs[0]);
+
 copyImageIdBtn.addEventListener("click", async () => {
   await navigator.clipboard.writeText(imageIdValue.textContent);
   copyImageIdBtn.title = "Copied!";
@@ -23,6 +37,10 @@ openViewerBtn.addEventListener("click", () => {
 
 document.getElementById("openExerciseDataBtn").addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("exercise-data.html") });
+});
+
+document.getElementById("openMascotMoodBtn").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("mascot-mood.html") });
 });
 
 async function render() {
