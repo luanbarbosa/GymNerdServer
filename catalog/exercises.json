@@ -28,6 +28,105 @@
     "imageFileId": "fc12abce-638e-458f-9267-2ec869c9e3bc"
   },
   {
+  "id": "d71067cd-32f0-49ef-95d6-eb5b4987970c",
+  "name": "Deep squat hold",
+  "namePT": "Agachamento profundo isométrico",
+  "type": "MOBILITY",
+  "trackedMetrics": [
+    { "type": "REPS", "default": true },
+    { "type": "DURATION", "default": false }
+  ],
+  "searchAlias": [
+    "deep squat",
+    "squat hold",
+    "bottom squat hold",
+    "resting squat",
+    "malasana",
+    "asian squat"
+  ],
+  "searchAliasPT": [
+    "agachamento profundo",
+    "agachamento isométrico",
+    "agachamento sustentado",
+    "agachamento total",
+    "posição de cócoras",
+    "cócoras"
+  ],
+  "imageFileId": "9f0655b5-1fbd-411d-913c-5997d6d3e19e"
+},
+{
+  "id": "46fa8a3e-cd90-4ce2-a636-3f83210e39b1",
+  "name": "Knee to wall",
+  "namePT": "Joelho na parede",
+  "type": "MOBILITY",
+  "trackedMetrics": [
+    { "type": "REPS", "default": true },
+    { "type": "DURATION", "default": false }
+  ],
+  "searchAlias": [
+    "knee to wall ankle mobility",
+    "ankle mobility",
+    "ankle dorsiflexion",
+    "wall ankle stretch",
+    "knee to wall stretch"
+  ],
+  "searchAliasPT": [
+    "joelho à parede",
+    "joelho até a parede",
+    "mobilidade de tornozelo",
+    "dorsiflexão de tornozelo",
+    "alongamento de tornozelo na parede"
+  ],
+  "imageFileId": "556214cb-77f8-4395-b0d1-dc410e1e0e00"
+},
+{
+  "id": "4884d425-7f3e-4dc1-8ab4-d556ae06424c",
+  "name": "Windshield wiper",
+  "namePT": "Abdominal limpador de para-brisa",
+  "type": "CORE",
+  "trackedMetrics": [
+    { "type": "REPS", "default": true },
+    { "type": "DURATION", "default": false }
+  ],
+  "searchAlias": [
+    "windshield wipers",
+    "lying windshield wiper",
+    "leg windshield wiper",
+    "ab windshield wiper",
+    "core rotation"
+  ],
+  "searchAliasPT": [
+    "limpador de para-brisa",
+    "limpador de parabrisa",
+    "abdominal para-brisa",
+    "abdominal parabrisa",
+    "rotação de pernas deitado"
+  ],
+  "imageFileId": "fb4e09c1-f66e-4d74-aee4-2660d6886eb9"
+},
+{
+  "id": "05a91c28-d169-4dd2-a379-b252c13f1f64",
+  "name": "Volleyball",
+  "namePT": "Vôlei",
+  "type": "OTHER",
+  "trackedMetrics": [
+    { "type": "DURATION", "default": false }
+  ],
+  "searchAlias": [
+    "volley",
+    "indoor volleyball",
+    "beach volleyball",
+    "vball"
+  ],
+  "searchAliasPT": [
+    "voleibol",
+    "vôlei de praia",
+    "vôlei de quadra",
+    "volei"
+  ],
+  "imageFileId": "4d8c2d4f-8cba-48b6-a498-466f82fb6aa6"
+},
+  {
     "id": "87a12dd5-8b00-4d54-b924-ce9298a0bf2c",
     "name": "Lying Neck Flexion",
     "namePT": "Flexão de pescoço deitado",
